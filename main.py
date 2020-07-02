@@ -6,7 +6,7 @@ import random
 pygame.font.init()
 
 WIDTH, HEIGHT = 750, 750
-WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Space Shooter Tutorial")
 
 # Load images
@@ -33,8 +33,8 @@ class Laser:
         self.img = img
         self.mask = pygame.mask.from_surface(self.img)
 
-    def draw(self, window):
-        window.blit(self.img, (self.x, self.y))
+    def draw(self, WINDOWdow):
+        WINDOWdow.blit(self.img, (self.x, self.y))
 
     def move(self, vel):
         self.y += vel
@@ -57,10 +57,10 @@ class Ship:
         self.lasers = []
         self.cool_down_counter = 0
 
-    def draw(self, window):
-        window.blit(self.ship_img, (self.x, self.y))
+    def draw(self, WINDOWdow):
+        WINDOWdow.blit(self.ship_img, (self.x, self.y))
         for laser in self.lasers:
-            laser.draw(window)
+            laser.draw(WINDOWdow)
 
     def move_lasers(self, vel, obj):
         self.cooldown()
@@ -111,13 +111,13 @@ class Player(Ship):
                         if laser in self.lasers:
                             self.lasers.remove(laser)
 
-    def draw(self, window):
-        super().draw(window)
-        self.healthbar(window)
+    def draw(self, WINDOWdow):
+        super().draw(WINDOWdow)
+        self.healthbar(WINDOWdow)
 
-    def healthbar(self, window):
-        pygame.draw.rect(window, (255,0,0), (self.x, self.y + self.ship_img.get_height() + 10, self.ship_img.get_width(), 10))
-        pygame.draw.rect(window, (0,255,0), (self.x, self.y + self.ship_img.get_height() + 10, self.ship_img.get_width() * (self.health/self.max_health), 10))
+    def healthbar(self, WINDOWdow):
+        pygame.draw.rect(WINDOWdow, (255,0,0), (self.x, self.y + self.ship_img.get_height() + 10, self.ship_img.get_width(), 10))
+        pygame.draw.rect(WINDOWdow, (0,255,0), (self.x, self.y + self.ship_img.get_height() + 10, self.ship_img.get_width() * (self.health/self.max_health), 10))
 
 class Enemy(Ship):
     COLOR_MAP = {
@@ -145,7 +145,7 @@ def collide(obj1, obj2):
     offset_y = obj2.y - obj1.y
     return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
 
-def main():
+def main(difficulty):
     run = True
     FPS = 60
     level = 0
@@ -154,8 +154,8 @@ def main():
     lost_font = pygame.font.SysFont("comicsans", 60)
 
     enemies = []
-    wave_length = 5
-    enemy_vel = 1
+    wave_length = 5 * difficulty
+    enemy_vel = 1 * difficulty
 
     player_vel = 5
     laser_vel = 5
@@ -167,29 +167,29 @@ def main():
     lost = False
     lost_count = 0
 
-    def redraw_window():
-        WIN.blit(BACKGROUND, (0,0))
+    def redraw_WINDOWdow():
+        WINDOW.blit(BACKGROUND, (0,0))
         # draw text
         lives_label = main_font.render(f"Lives: {lives}", 1, (255,255,255))
         level_label = main_font.render(f"Level: {level}", 1, (255,255,255))
 
-        WIN.blit(lives_label, (10, 10))
-        WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
+        WINDOW.blit(lives_label, (10, 10))
+        WINDOW.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
 
         for enemy in enemies:
-            enemy.draw(WIN)
+            enemy.draw(WINDOW)
 
-        player.draw(WIN)
+        player.draw(WINDOW)
 
         if lost:
             lost_label = lost_font.render("You Lost!!", 1, (255,255,255))
-            WIN.blit(lost_label, (WIDTH/2 - lost_label.get_width()/2, 350))
+            WINDOW.blit(lost_label, (WIDTH/2 - lost_label.get_width()/2, 350))
 
         pygame.display.update()
 
     while run:
         clock.tick(FPS)
-        redraw_window()
+        redraw_WINDOWdow()
 
         if lives <= 0 or player.health <= 0:
             lost = True
@@ -240,22 +240,42 @@ def main():
 
         player.move_lasers(-laser_vel, enemies)
 
-def main_menu(title_font):
-    WIN.blit(BACKGROUND, (0,0))
+def main_menu(difficulty, title_font):
     title_label = title_font.render("Press the mouse to begin...", 1, (255,255,255))
-    WIN.blit(title_label, (WIDTH/2 - title_label.get_width()/2, 350))
+    difficulty_label = title_font.render("Press h for hard mode", 1, (255,255,255))
+    difficulty_toggled = title_font.render("Hard mode activated", 1, (255,255,255))
+
+    WINDOW.blit(title_label, (WIDTH/2 - title_label.get_width()/2, 325))
+    WINDOW.blit(difficulty_label, (WIDTH/2 - title_label.get_width()/2, 450))
+
+    if difficulty == 2:
+        WINDOW.blit(difficulty_toggled, (WIDTH/2 - title_label.get_width()/2, 500))
 
 def game_driver():
     title_font = pygame.font.SysFont("comicsans", 70)
-    main_menu(title_font)
+    WINDOW.blit(BACKGROUND, (0,0))
+    difficulty = 1
+
     run = True
     while run:
         pygame.display.update()
+        playGame = False
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_h]:
+            difficulty = 2
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                main()
+                playGame = True
+
+        if playGame:
+            main(difficulty)
+        else:
+            main_menu(difficulty, title_font)
+
     pygame.quit()
 
 game_driver()
