@@ -4,6 +4,7 @@ import time
 import random
 
 # Load in fonts
+# pygame.init()
 pygame.font.init()
 
 # Set window size
@@ -29,6 +30,25 @@ YELLOW_LASER = pygame.image.load(os.path.join("assets", "pixel_laser_yellow.png"
 
 # Background
 BACKGROUND = pygame.transform.scale(pygame.image.load(os.path.join("assets", "background-black.png")), (WIDTH, HEIGHT))
+
+class Laser:
+    def __init__(self, x, y, img):
+        self.x = x
+        self.y = y
+        self.img = img
+        self.mask = pygame.mask.from_surface(self.img)
+
+    def draw(self, window):
+        window.blit(self.img, (self.x, self.y))
+
+    def move(self, vel):
+        self.y += vel
+
+    def off_screen(self, height):
+        return self.y <= height and self.y >= 0
+
+    def collision(self, obj):
+        return collide(obj, self)
 
 class Ship:
     def __init__(self, x, y, health=100):
@@ -71,6 +91,11 @@ class Enemy(Ship):
 
     def move(self, vel):
         self.y += vel
+
+def collide(obj1, obj2):
+    offset_x = obj2.x - obj1.x
+    offset_y = obj2.y - obj1.y
+    return obj1.mask.overlap(obj2, (offset_x, offset_y))
 
 def main():
     run = True
@@ -117,14 +142,12 @@ def main():
     while run:
         clock.tick(FPS) # tick the clock 60 times per second
 
-        redraw_window()
-
         if lives <= 0 or player.health <= 0:
             lost = True
             lost_count += 1
 
         if lost_count > FPS * 3:
-            run = False:
+            run = False
         else:
             continue
 
@@ -155,5 +178,7 @@ def main():
             if enemy.y + enemy.get_height() > HEIGHT:
                 lives -= 1
                 enemies.remove(enemy)
+
+        redraw_window()
 
 main()
